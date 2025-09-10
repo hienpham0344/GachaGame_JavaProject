@@ -5,7 +5,7 @@ import com.weapon.model.Weapon;
 
 public class Mage implements Role {
 
-    private double health = 70.0;
+    private double health = 100.0;
 
 
     @Override
@@ -35,10 +35,7 @@ public class Mage implements Role {
 
     @Override
     public void useSkill() {
-        if ( health <= 70.0*0.2 )
-        {
-            health += 30;
-            System.out.println("the health lower than 20% , HEAL 30 HEALTH !!");
-        }
+        System.out.println("Health lower than 30% use ultimate skill, HEAL 30 HEALTH");
+        health += 30;
     }
 }

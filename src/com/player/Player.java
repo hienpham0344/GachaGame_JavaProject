@@ -27,4 +27,28 @@ public class Player {
     public String getWeapon() {
         return weapon.getName();
     }
+
+    public double getHealth()
+    {
+        return role.getHealth();
+    }
+
+    public void useSkill()
+    {
+        role.useSkill();
+    }
+
+    public void getDamage( double damage)
+    {
+        role.takeDamage(damage);
+    }
+
+    public double attack()
+    {
+        return (role.attack() + weapon.getDamage())/2;
+    }
+
+    public boolean block(){
+        return true;
+    }
 }

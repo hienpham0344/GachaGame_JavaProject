@@ -3,11 +3,11 @@ import com.util.WeaponFactory;
 import com.weapon.model.Weapon;
 
 public class Warrior implements Role{
-    private double health = 80.0;
+    private double health = 90.0;
 
     @Override
     public String getName() {
-        return "Mage";
+        return "Warrior";
     }
 
     public Weapon getRandomWeapon() {
@@ -32,10 +32,6 @@ public class Warrior implements Role{
 
     @Override
     public void useSkill() {
-
-        if ( health <= 80.0*0.2 )
-        {
-            System.out.println("the health lower than 20%, DAMAGE BOOST BY 30% !!");
-        }
+        System.out.println("Health lower than 30% use ultimate skill, DAMAGE BOOSE BY 30%");
     }
 }
