@@ -12,135 +12,134 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.Random;
 
-public class Main {
+public class
+Main {
 
     public static void main(String[] args) {
-        // player input for the game - player role, boss, weapon
-        String name = JOptionPane.showInputDialog("Enter your name:");
+        String name = GameUI.getInput("Enter your name:");
 
+        // pick mode
         String[] gameModes = {"Normal", "Hard"};
-        int gameMode = JOptionPane.showOptionDialog(
-                null,
-                "Choose game mode:",
-                "Game Mode",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                gameModes,
-                gameModes[0]
-        );
+        int gameMode = GameUI.chooseOption("Choose game mode:", "Game Mode", gameModes);
 
+        // pick role
         String[] roles = {"Mage", "Warrior"};
-        int choice = JOptionPane.showOptionDialog(
-                null,
-                "Pick your role:",
-                "Role Selection",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                roles,
-                roles[0]
-        );
+        int choice = GameUI.chooseOption("Pick your role:", "Role Selection", roles);
 
         Role role = (choice == 0) ? new Mage() : new Warrior();
         EnemiesAbstract boss = (gameMode == 0) ? new NormalBoss() : new HardBoss();
 
         final Player player = new Player(name, role);
-        JOptionPane.showMessageDialog(null,
-                "🎉 Congratulations, you got " + player.getWeapon() +
-                        "\nBoss has: " + boss.getHealth() + " health" +
-                        "\nYou have: " + player.getHealth() + " health"
-        );
+        GameUI.showMessage("🎉 Congratulations, you got " + player.getWeapon() +
+                "\nBoss has: " + boss.getHealth() + " health" +
+                "\nYou have: " + player.getHealth() + " health");
 
-        JOptionPane.showMessageDialog(null, fightingProcess(player, boss));
+        GameUI.showMessage(fightingProcess(player, boss));
     }
 
     public static String fightingProcess(Player player, EnemiesAbstract boss) {
         final double playerMaxHealth = player.getHealth();
         Random rate = new Random();
-        boolean use = false;
+        boolean useSkill = false;
         double damageBoost = 1.0;
 
         while (player.getHealth() > 0 && boss.getHealth() > 0) {
             int critRate = rate.nextInt(2);
-            double playerArmorPenetration = rate.nextDouble();
+            double playerArmorPen = rate.nextDouble();
             double bossCritRate = rate.nextDouble();
-            double bossArmorPenetration = rate.nextDouble();
+            double bossArmorPen = rate.nextDouble();
             int bossChoice = rate.nextInt(2);
 
-            if (!use && player.getHealth() < playerMaxHealth * 0.3) {
-                player.useSkill();
+            // Check ultimate skill
+            if (!useSkill && player.getHealth() < playerMaxHealth * 0.3) {
+                useSkill = true;
                 if (Objects.equals(player.getRole(), "Warrior")) {
+                    GameUI.showMessage("⚡ Health lower than 30%! Warrior uses ultimate skill: DAMAGE +30%!");
                     damageBoost += 0.3;
+                } else {
+                    player.heal(30); // thêm hàm heal trong Player
+                    GameUI.showMessage("✨ Health lower than 30%! Mage uses ultimate skill: HEAL +30 HP!");
                 }
-                use = true;
             }
 
+            // Player action
             String[] actions = {"Attack", "Block"};
-            int playerChoice = JOptionPane.showOptionDialog(
-                    null,
-                    "Choose your action:",
-                    "Your Turn",
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    actions,
-                    actions[0]
-            );
+            int playerChoice = GameUI.chooseOption("Choose your action:", "Your Turn", actions);
 
-            StringBuilder roundLog = new StringBuilder("---------------------- ATTACKING ----------------------\n");
+            // Battle log
+            BattleLog log = new BattleLog();
+            log.add("---------------------- ATTACKING ----------------------");
 
             if (bossChoice == 1) { // Boss block
                 if (playerChoice == 0) {
-                    double damage = player.attack() * playerArmorPenetration * damageBoost;
+                    double damage = player.attack() * playerArmorPen * damageBoost;
                     boss.getDamage(damage);
-                    roundLog.append(String.format(
-                            "Boss blocked! Your attack dealt %.1f (ArmorPen %.2f)\n",
-                            damage, playerArmorPenetration
-                    ));
+                    log.add(String.format("Boss blocked! Your attack dealt %.1f (ArmorPen %.2f)", damage, playerArmorPen));
                 } else {
-                    roundLog.append("Both are blocking!\n");
+                    log.add("Both are blocking!");
                 }
             } else { // Boss attack
                 if (playerChoice == 0) { // Player attack
-                    double playerDamage;
-                    if (critRate == 1) {
-                        playerDamage = player.attack() * 1.3 * damageBoost;
-                        roundLog.append(String.format("Your attack CRIT! You dealt %.1f\n", playerDamage));
-                    } else {
-                        playerDamage = player.attack() * damageBoost;
-                        roundLog.append(String.format("Your attack hit! You dealt %.1f\n", playerDamage));
-                    }
+                    double playerDamage = calcDamage(player.attack(), critRate == 1, damageBoost);
                     boss.getDamage(playerDamage);
+                    log.add((critRate == 1) ? "Your attack CRIT! You dealt " + playerDamage
+                            : "Your attack hit! You dealt " + playerDamage);
 
-                    // Boss phản công
-                    double bossDamage;
-                    if (bossCritRate > 0.5) { // crit khi > 50%
-                        bossDamage = boss.attack() * 1.3;
-                        roundLog.append(String.format("Boss CRIT! You took %.1f damage\n", bossDamage));
-                    } else {
-                        bossDamage = boss.attack();
-                        roundLog.append(String.format("Boss hit you! You took %.1f damage\n", bossDamage));
-                    }
-                    player.getDamage(bossDamage);
+                    double bossDamage = calcDamage(boss.attack(), bossCritRate > 0.5, 1.0);
+                    player.takeDamage(bossDamage);
+                    log.add((bossCritRate > 0.5) ? "Boss CRIT! You took " + bossDamage
+                            : "Boss hit you! You took " + bossDamage);
 
                 } else { // Player block
-                    double damage = boss.attack() * bossArmorPenetration;
-                    player.getDamage(damage);
-                    roundLog.append(String.format(
-                            "You blocked! Took %.1f damage (Boss ArmorPen %.2f)\n",
-                            damage, bossArmorPenetration
-                    ));
+                    double damage = boss.attack() * bossArmorPen;
+                    player.takeDamage(damage);
+                    log.add(String.format("You blocked! Took %.1f damage (Boss ArmorPen %.2f)", damage, bossArmorPen));
                 }
             }
 
-            roundLog.append("\n---------------------- STATUS ----------------------\n");
-            roundLog.append(String.format("Player HP: %.1f\n", (player.getHealth() < 0) ? 0 : player.getHealth()));
-            roundLog.append(String.format("Boss HP: %.1f\n", (boss.getHealth() < 0) ? 0 : boss.getHealth()));
-
-            JOptionPane.showMessageDialog(null, roundLog.toString());
+            log.add("\n---------------------- STATUS ----------------------");
+            log.add(String.format("Player HP: %.1f", Math.max(0, player.getHealth())));
+            log.add(String.format("Boss HP: %.1f", Math.max(0, boss.getHealth())));
+            log.show();
         }
 
         return (player.getHealth() <= 0) ? "💀 You lose!" : "🏆 You win!";
+    }
+
+    private static double calcDamage(double baseDamage, boolean crit, double multiplier) {
+        return crit ? baseDamage * 1.3 * multiplier : baseDamage * multiplier;
+    }
+}
+
+/** Class BattleLog để gom log */
+class BattleLog {
+    private final StringBuilder sb = new StringBuilder();
+
+    public void add(String msg) {
+        sb.append(msg).append("\n");
+    }
+
+    public void show() {
+        JOptionPane.showMessageDialog(null, sb.toString());
+    }
+}
+
+/** Class GameUI để gom toàn bộ UI */
+class GameUI {
+    public static void showMessage(String msg) {
+        JOptionPane.showMessageDialog(null, msg);
+    }
+
+    public static String getInput(String msg) {
+        return JOptionPane.showInputDialog(msg);
+    }
+
+    public static int chooseOption(String msg, String title, String[] options) {
+        return JOptionPane.showOptionDialog(
+                null, msg, title,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, options, options[0]
+        );
     }
 }

@@ -1,6 +1,6 @@
 package com.player;
 import com.role.model.Role;
-import com.util.WeaponFactory;
+
 import com.weapon.model.Weapon;
 
 public class Player {
@@ -33,12 +33,12 @@ public class Player {
         return role.getHealth();
     }
 
-    public void useSkill()
+    public void heal( double hp )
     {
-        role.useSkill();
+        role.heal(hp);
     }
 
-    public void getDamage( double damage)
+    public void takeDamage( double damage)
     {
         role.takeDamage(damage);
     }
@@ -48,7 +48,7 @@ public class Player {
         return (role.attack() + weapon.getDamage())/2;
     }
 
-    public boolean block(){
-        return true;
-    }
+    /*public boolean block(){
+        return Math.random() < 0.5;
+    }*/
 }

@@ -31,7 +31,7 @@ public class Warrior implements Role{
     }
 
     @Override
-    public void useSkill() {
-        System.out.println("Health lower than 30% use ultimate skill, DAMAGE BOOSE BY 30%");
+    public void heal(double hp) {
+        health += hp;
     }
 }

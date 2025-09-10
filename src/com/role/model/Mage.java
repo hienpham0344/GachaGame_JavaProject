@@ -34,8 +34,7 @@ public class Mage implements Role {
     }
 
     @Override
-    public void useSkill() {
-        System.out.println("Health lower than 30% use ultimate skill, HEAL 30 HEALTH");
-        health += 30;
+    public void heal(double hp) {
+        health += hp;
     }
 }

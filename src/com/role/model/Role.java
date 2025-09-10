@@ -8,5 +8,5 @@ public interface Role {
     double getHealth();
     void takeDamage( double damage );
     double attack();
-    void useSkill();
+    void heal(double hp);
 }
